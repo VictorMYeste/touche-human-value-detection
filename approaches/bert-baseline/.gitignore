@@ -3,3 +3,4 @@ model/
 valueeval24/
 valueeval24.zip
 output/
+*.DS_Store
