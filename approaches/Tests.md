@@ -87,3 +87,14 @@ Universalism: tolerance attained:       0.00
 Universalism: tolerance constrained:    0.03
 
 Macro average:                          0.15
+
+# bert-baseline-optuna
+
+Best trial:
+  Value: 0.12
+  Params:
+    learning_rate: 2.9052405145906253e-05
+    batch_size: 8
+    num_train_epochs: 3
+    weight_decay: 0.04094509981752778
+

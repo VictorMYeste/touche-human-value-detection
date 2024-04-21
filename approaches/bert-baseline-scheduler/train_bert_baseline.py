@@ -7,7 +7,7 @@ import sys
 import tempfile
 import torch
 import transformers
-import optuna
+
 
 
 # GENERIC
@@ -42,98 +42,6 @@ def load_dataset(directory, tokenizer, load_labels=True):
 
 
 # TRAINING
-
-def train_with_optuna(training_dataset, validation_dataset, pretrained_model, tokenizer, model_name=None, n_trials=100):
-    # https://github.com/NielsRogge/Transformers-Tutorials/blob/master/BERT/Fine_tuning_BERT_(and_friends)_for_multi_label_text_classification.ipynb
-    def compute_metrics(eval_prediction):
-        prediction_scores, label_scores = eval_prediction
-        predictions = prediction_scores >= 0.0 # sigmoid
-        labels = label_scores >= 0.5
-
-        f1_scores = {}
-        for i in range(predictions.shape[1]):
-            predicted = predictions[:,i].sum()
-            true = labels[:,i].sum()
-            true_positives = numpy.logical_and(predictions[:,i], labels[:,i]).sum()
-            precision = 0 if predicted == 0 else true_positives / predicted
-            recall = 0 if true == 0 else true_positives / true
-            f1_scores[id2label[i]] = round(0 if precision + recall == 0 else 2 * (precision * recall) / (precision + recall), 2)
-        macro_average_f1_score = round(numpy.mean(list(f1_scores.values())), 2)
-
-        return {'f1-score': f1_scores, 'marco-avg-f1-score': macro_average_f1_score}
-    
-    def objective(trial):
-        # Hiperparámetros a optimizar
-        learning_rate = trial.suggest_loguniform('learning_rate', 1e-5, 1e-4)
-        batch_size = trial.suggest_categorical('batch_size', [8, 16, 32])
-        num_train_epochs = trial.suggest_int('num_train_epochs', 3, 5)
-        weight_decay = trial.suggest_float('weight_decay', 0.0, 0.1)
-
-        output_dir = tempfile.TemporaryDirectory()
-
-        # Configuración de los argumentos de entrenamiento
-        args = transformers.TrainingArguments(
-            output_dir=output_dir.name,
-            evaluation_strategy="epoch",
-            hub_model_id=model_name,
-            save_strategy="epoch",
-            learning_rate=learning_rate,
-            per_device_train_batch_size=batch_size,
-            per_device_eval_batch_size=batch_size,
-            num_train_epochs=num_train_epochs,
-            weight_decay=weight_decay,
-            load_best_model_at_end=True,
-            metric_for_best_model='marco-avg-f1-score',
-            logging_dir='./logs',  # Guardar logs para cada trial
-        )
-
-        model = transformers.AutoModelForSequenceClassification.from_pretrained(
-            pretrained_model,
-            problem_type="multi_label_classification",
-            num_labels=len(labels),
-            id2label=id2label,
-            label2id=label2id
-        )
-
-        if torch.cuda.is_available():
-            print("Using cuda")
-            model = model.to('cuda')
-
-        # Crear un objeto Trainer
-        trainer = transformers.Trainer(
-            model=model,
-            args=args,
-            train_dataset=training_dataset,
-            eval_dataset=validation_dataset,
-            compute_metrics=compute_metrics,
-            tokenizer=tokenizer
-        )
-
-        trainer.train()
-        evaluation = trainer.evaluate()
-
-        # Guardar el modelo si este es el mejor trial hasta ahora
-        if args.model_directory != None and al.number == trial.number:
-            print("\n\nSAVE to " + args.model_directory)
-            print("======")
-            model.save_pretrained(args.model_directory)
-            tokenizer.save_pretrained(args.model_directory)  # Guarda el tokenizer también
-
-        # Optuna busca minimizar, entonces devolvemos el negativo del F1 para maximizarlo
-        return -evaluation['eval_marco-avg-f1-score']
-    
-    study = optuna.create_study(direction='minimize')
-    study.optimize(objective, n_trials=n_trials, n_jobs=1)
-
-    print("Best trial:")
-    trial = study.best_trial
-
-    print(f"  Value: {-trial.value}")
-    print("  Params: ")
-    for key, value in trial.params.items():
-        print(f"    {key}: {value}")
-
-    return study.best_trial
 
 def train(training_dataset, validation_dataset, pretrained_model, tokenizer, model_name=None, batch_size=8, num_train_epochs=5, learning_rate=2e-5, weight_decay=0.01):
     # https://github.com/NielsRogge/Transformers-Tutorials/blob/master/BERT/Fine_tuning_BERT_(and_friends)_for_multi_label_text_classification.ipynb
@@ -181,6 +89,24 @@ def train(training_dataset, validation_dataset, pretrained_model, tokenizer, mod
     trainer = transformers.Trainer(model, args,
         train_dataset=training_dataset, eval_dataset=validation_dataset,
         compute_metrics=compute_metrics, tokenizer=tokenizer)
+    
+    # Configuración del scheduler
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
+    num_training_steps = num_train_epochs * (len(training_dataset) // batch_size)
+    scheduler = transformers.get_scheduler(
+        "linear",
+        optimizer=optimizer,
+        num_warmup_steps=0,
+        num_training_steps=num_training_steps
+    )
+    # scheduler = StepLR(optimizer, step_size=10, gamma=0.5)
+    # scheduler = ExponentialLR(optimizer, gamma=0.9)
+    # scheduler = CosineAnnealingLR(optimizer, T_max=50)
+
+    # Reemplazar el optimizer y scheduler del trainer
+    trainer.optimizer = optimizer
+    trainer.lr_scheduler = scheduler
+
     trainer.train()
 
     print("\n\nVALIDATION")
@@ -208,9 +134,14 @@ training_dataset, training_text_ids, training_sentence_ids = load_dataset(args.t
 validation_dataset = training_dataset
 if args.validation_dataset != None:
     validation_dataset, validation_text_ids, validation_sentence_ids = load_dataset(args.validation_dataset, tokenizer)
-# trainer = train(training_dataset, validation_dataset, pretrained_model, tokenizer, model_name = args.model_name)
-trainer = train_with_optuna(training_dataset, validation_dataset, pretrained_model, tokenizer, model_name = args.model_name, n_trials=5)
+trainer = train(training_dataset, validation_dataset, pretrained_model, tokenizer, model_name = args.model_name)
 if args.model_name != None:
     print("\n\nUPLOAD to https://huggingface.co/" + args.model_name + " (using HF_TOKEN environment variable)")
     print("======")
     #trainer.push_to_hub()
+
+if args.model_directory != None:
+    print("\n\nSAVE to " + args.model_directory)
+    print("======")
+    trainer.save_model(args.model_directory)
+
