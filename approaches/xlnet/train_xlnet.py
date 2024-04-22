@@ -120,15 +120,15 @@ def train(training_dataset, validation_dataset, pretrained_model, tokenizer, mod
 
 # COMMAND LINE INTERFACE
 
-cli = argparse.ArgumentParser(prog="BERT Baseline")
+cli = argparse.ArgumentParser(prog="XLNet")
 cli.add_argument("-t", "--training-dataset", required=True)
 cli.add_argument("-v", "--validation-dataset")
 cli.add_argument("-m", "--model-name")
 cli.add_argument("-o", "--model-directory")
 args = cli.parse_args()
 
-pretrained_model = "bert-base-uncased"
-tokenizer = transformers.AutoTokenizer.from_pretrained(pretrained_model)
+pretrained_model = "xlnet-base-cased"
+tokenizer = transformers.XLNetTokenizer.from_pretrained(pretrained_model)
 
 training_dataset, training_text_ids, training_sentence_ids = load_dataset(args.training_dataset, tokenizer)
 validation_dataset = training_dataset
@@ -144,4 +144,3 @@ if args.model_directory != None:
     print("\n\nSAVE to " + args.model_directory)
     print("======")
     trainer.save_model(args.model_directory)
-

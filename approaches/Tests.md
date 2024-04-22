@@ -47,6 +47,8 @@ Macro average:                          0.16
 
 # bert-baseline (17/04)
 
+batch_size=8, num_train_epochs=5, learning_rate=2e-5, weight_decay=0.01
+
 Self-direction: thought attained:       0.00
 Self-direction: thought constrained:    0.00
 Self-direction: action attained:        0.12
@@ -97,4 +99,55 @@ Best trial:
     batch_size: 8
     num_train_epochs: 3
     weight_decay: 0.04094509981752778
+
+Best trial is worse than bert-baseline (17/04), so optune is discarded for now (it is too slow to do a new batch of different trials with no cuda)
+
+# bert-baseline-scheduler (Linear)
+
+batch_size=8, num_train_epochs=5, learning_rate=2e-5, weight_decay=0.01
+
+Self-direction: thought attained:       0.00
+Self-direction: thought constrained:    0.00
+Self-direction: action attained:        0.15
+Self-direction: action constrained:     0.00
+Stimulation attained:                   0.27
+Stimulation constrained:                0.00
+Hedonism attained:                      0.26
+Hedonism constrained:                   0.00
+Achievement attained:                   0.33
+Achievement constrained:                0.17
+Power: dominance attained:              0.28
+Power: dominance constrained:           0.03
+Power: resources attained:              0.23
+Power: resources constrained:           0.18
+Face attained:                          0.01
+Face constrained:                       0.08
+Security: personal attained:            0.06
+Security: personal constrained:         0.28
+Security: societal attained:            0.30
+Security: societal constrained:         0.39
+Tradition attained:                     0.43
+Tradition constrained:                  0.00
+Conformity: rules attained:             0.36
+Conformity: rules constrained:          0.28
+Conformity: interpersonal attained:     0.00
+Conformity: interpersonal constrained:  0.00
+Humility attained:                      0.00
+Humility constrained:                   0.00
+Benevolence: caring attained:           0.18
+Benevolence: caring constrained:        0.00
+Benevolence: dependability attained:    0.22
+Benevolence: dependability constrained: 0.00
+Universalism: concern attained:         0.34
+Universalism: concern constrained:      0.13
+Universalism: nature attained:          0.40
+Universalism: nature constrained:       0.28
+Universalism: tolerance attained:       0.00
+Universalism: tolerance constrained:    0.00
+
+Macro average:                          0.15
+
+# bert-baseline-scheduler (StepLR)
+
+batch_size=8, num_train_epochs=5, learning_rate=2e-5, weight_decay=0.01
 
