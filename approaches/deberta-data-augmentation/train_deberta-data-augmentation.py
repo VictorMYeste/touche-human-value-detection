@@ -179,23 +179,6 @@ def train(training_dataset, validation_dataset, pretrained_model, tokenizer, mod
     trainer = transformers.Trainer(model, args,
         train_dataset=training_dataset, eval_dataset=validation_dataset,
         compute_metrics=compute_metrics, tokenizer=tokenizer)
-    
-    # Configuración del scheduler
-    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
-    num_training_steps = num_train_epochs * (len(training_dataset) // batch_size)
-    scheduler = transformers.get_scheduler(
-        "linear",
-        optimizer=optimizer,
-        num_warmup_steps=0,
-        num_training_steps=num_training_steps
-    )
-    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
-    # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50)
-
-    # Reemplazar el optimizer y scheduler del trainer
-    trainer.optimizer = optimizer
-    trainer.lr_scheduler = scheduler
 
     trainer.train()
 

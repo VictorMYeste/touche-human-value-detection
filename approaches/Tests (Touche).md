@@ -290,5 +290,46 @@ Universalism: tolerance constrained:    0.00
 
 Macro average:                          0.14
 
-# roberta-base
+# roberta-base con scheduler (Linear)
+
+Self-direction: thought attained:       0.00
+Self-direction: thought constrained:    0.00
+Self-direction: action attained:        0.00
+Self-direction: action constrained:     0.00
+Stimulation attained:                   0.00
+Stimulation constrained:                0.00
+Hedonism attained:                      0.00
+Hedonism constrained:                   0.00
+Achievement attained:                   0.00
+Achievement constrained:                0.00
+Power: dominance attained:              0.00
+Power: dominance constrained:           0.00
+Power: resources attained:              0.00
+Power: resources constrained:           0.00
+Face attained:                          0.00
+Face constrained:                       0.00
+Security: personal attained:            0.00
+Security: personal constrained:         0.00
+Security: societal attained:            0.00
+Security: societal constrained:         0.00
+Tradition attained:                     0.00
+Tradition constrained:                  0.00
+Conformity: rules attained:             0.00
+Conformity: rules constrained:          0.00
+Conformity: interpersonal attained:     0.00
+Conformity: interpersonal constrained:  0.00
+Humility attained:                      0.00
+Humility constrained:                   0.00
+Benevolence: caring attained:           0.00
+Benevolence: caring constrained:        0.00
+Benevolence: dependability attained:    0.00
+Benevolence: dependability constrained: 0.00
+Universalism: concern attained:         0.00
+Universalism: concern constrained:      0.00
+Universalism: nature attained:          0.00
+Universalism: nature constrained:       0.00
+Universalism: tolerance attained:       0.00
+Universalism: tolerance constrained:    0.00
+
+Macro average:                          0.00
 
