@@ -333,3 +333,194 @@ Universalism: tolerance constrained:    0.00
 
 Macro average:                          0.00
 
+# roberta-base
+
+Self-direction: thought attained:       0.00
+Self-direction: thought constrained:    0.00
+Self-direction: action attained:        0.20
+Self-direction: action constrained:     0.00
+Stimulation attained:                   0.30
+Stimulation constrained:                0.00
+Hedonism attained:                      0.39
+Hedonism constrained:                   0.00
+Achievement attained:                   0.38
+Achievement constrained:                0.23
+Power: dominance attained:              0.31
+Power: dominance constrained:           0.01
+Power: resources attained:              0.22
+Power: resources constrained:           0.20
+Face attained:                          0.04
+Face constrained:                       0.05
+Security: personal attained:            0.03
+Security: personal constrained:         0.29
+Security: societal attained:            0.30
+Security: societal constrained:         0.44
+Tradition attained:                     0.42
+Tradition constrained:                  0.00
+Conformity: rules attained:             0.37
+Conformity: rules constrained:          0.33
+Conformity: interpersonal attained:     0.00
+Conformity: interpersonal constrained:  0.00
+Humility attained:                      0.00
+Humility constrained:                   0.00
+Benevolence: caring attained:           0.17
+Benevolence: caring constrained:        0.00
+Benevolence: dependability attained:    0.21
+Benevolence: dependability constrained: 0.00
+Universalism: concern attained:         0.35
+Universalism: concern constrained:      0.14
+Universalism: nature attained:          0.52
+Universalism: nature constrained:       0.42
+Universalism: tolerance attained:       0.00
+Universalism: tolerance constrained:    0.00
+
+Macro average:                          0.17
+
+# deberta
+
+Self-direction: thought attained:       0.04
+Self-direction: thought constrained:    0.00
+Self-direction: action attained:        0.24
+Self-direction: action constrained:     0.03
+Stimulation attained:                   0.31
+Stimulation constrained:                0.00
+Hedonism attained:                      0.39
+Hedonism constrained:                   0.06
+Achievement attained:                   0.35
+Achievement constrained:                0.25
+Power: dominance attained:              0.30
+Power: dominance constrained:           0.08
+Power: resources attained:              0.23
+Power: resources constrained:           0.19
+Face attained:                          0.08
+Face constrained:                       0.23
+Security: personal attained:            0.13
+Security: personal constrained:         0.34
+Security: societal attained:            0.28
+Security: societal constrained:         0.42
+Tradition attained:                     0.42
+Tradition constrained:                  0.13
+Conformity: rules attained:             0.38
+Conformity: rules constrained:          0.31
+Conformity: interpersonal attained:     0.02
+Conformity: interpersonal constrained:  0.09
+Humility attained:                      0.00
+Humility constrained:                   0.00
+Benevolence: caring attained:           0.27
+Benevolence: caring constrained:        0.00
+Benevolence: dependability attained:    0.27
+Benevolence: dependability constrained: 0.00
+Universalism: concern attained:         0.31
+Universalism: concern constrained:      0.18
+Universalism: nature attained:          0.43
+Universalism: nature constrained:       0.47
+Universalism: tolerance attained:       0.15
+Universalism: tolerance constrained:    0.07
+
+Macro average:                          0.20
+
+# electra
+
+Self-direction: thought attained:       0.00
+Self-direction: thought constrained:    0.00
+Self-direction: action attained:        0.15
+Self-direction: action constrained:     0.00
+Stimulation attained:                   0.29
+Stimulation constrained:                0.00
+Hedonism attained:                      0.12
+Hedonism constrained:                   0.00
+Achievement attained:                   0.35
+Achievement constrained:                0.21
+Power: dominance attained:              0.32
+Power: dominance constrained:           0.02
+Power: resources attained:              0.24
+Power: resources constrained:           0.25
+Face attained:                          0.00
+Face constrained:                       0.04
+Security: personal attained:            0.00
+Security: personal constrained:         0.27
+Security: societal attained:            0.31
+Security: societal constrained:         0.42
+Tradition attained:                     0.38
+Tradition constrained:                  0.00
+Conformity: rules attained:             0.38
+Conformity: rules constrained:          0.31
+Conformity: interpersonal attained:     0.00
+Conformity: interpersonal constrained:  0.00
+Humility attained:                      0.00
+Humility constrained:                   0.00
+Benevolence: caring attained:           0.19
+Benevolence: caring constrained:        0.00
+Benevolence: dependability attained:    0.21
+Benevolence: dependability constrained: 0.00
+Universalism: concern attained:         0.35
+Universalism: concern constrained:      0.19
+Universalism: nature attained:          0.47
+Universalism: nature constrained:       0.39
+Universalism: tolerance attained:       0.00
+Universalism: tolerance constrained:    0.00
+
+Macro average:                          0.15
+
+# xlnet
+
+Self-direction: thought attained:       0.00
+Self-direction: thought constrained:    0.00
+Self-direction: action attained:        0.19
+Self-direction: action constrained:     0.00
+Stimulation attained:                   0.26
+Stimulation constrained:                0.00
+Hedonism attained:                      0.35
+Hedonism constrained:                   0.00
+Achievement attained:                   0.35
+Achievement constrained:                0.23
+Power: dominance attained:              0.28
+Power: dominance constrained:           0.07
+Power: resources attained:              0.28
+Power: resources constrained:           0.25
+Face attained:                          0.00
+Face constrained:                       0.11
+Security: personal attained:            0.10
+Security: personal constrained:         0.31
+Security: societal attained:            0.31
+Security: societal constrained:         0.41
+Tradition attained:                     0.37
+Tradition constrained:                  0.00
+Conformity: rules attained:             0.35
+Conformity: rules constrained:          0.35
+Conformity: interpersonal attained:     0.00
+Conformity: interpersonal constrained:  0.00
+Humility attained:                      0.00
+Humility constrained:                   0.00
+Benevolence: caring attained:           0.25
+Benevolence: caring constrained:        0.00
+Benevolence: dependability attained:    0.28
+Benevolence: dependability constrained: 0.00
+Universalism: concern attained:         0.35
+Universalism: concern constrained:      0.19
+Universalism: nature attained:          0.46
+Universalism: nature constrained:       0.41
+Universalism: tolerance attained:       0.11
+Universalism: tolerance constrained:    0.03
+
+Macro average:                          0.18
+
+# data augmentation
+
+synonyms:
+
+falta stop words y no hace sinónimos buenos
+
+Invert sentences no es recomendable, y evitar spacy.load dentro de la función
+
+parafrasis podría ser interesante, pero evitar cargar el modelo de nuevo
+
+MEJOR DEJARLO POR AHORA
+
+# lingüística
+
+dos modelos: primera tarea de ver si el valor humano está presente y luego si está a favor o en contra (stance detection), así solo se trabajará con la mitad de las clases
+
+podrían esta cambiando la distribución de los valores humanos según la cultura (si hay alguna clasificación de algún autor), atacando el prefijo. Aplicar el entrenamiento por separado por cada cultura en la primera capa (primera tarea)
+
+features lingüísticos quizá mejor hablarlo en una semana, igual que cómo ejecutarlo

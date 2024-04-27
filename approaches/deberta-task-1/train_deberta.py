@@ -13,7 +13,8 @@ import transformers
 # GENERIC
 
 values = [ "Self-direction: thought", "Self-direction: action", "Stimulation",  "Hedonism", "Achievement", "Power: dominance", "Power: resources", "Face", "Security: personal", "Security: societal", "Tradition", "Conformity: rules", "Conformity: interpersonal", "Humility", "Benevolence: caring", "Benevolence: dependability", "Universalism: concern", "Universalism: nature", "Universalism: tolerance" ]
-labels = sum([[value + " attained", value + " constrained"] for value in values], [])
+# labels = sum([[value + " attained", value + " constrained"] for value in values], [])
+labels = values[:]
 id2label = {idx:label for idx, label in enumerate(labels)}
 label2id = {label:idx for idx, label in enumerate(labels)} 
 
