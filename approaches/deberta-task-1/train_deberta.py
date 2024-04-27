@@ -31,6 +31,14 @@ def load_dataset(directory, tokenizer, load_labels=True):
 
     if load_labels and os.path.isfile(labels_file_path):
         labels_frame = pandas.read_csv(labels_file_path, encoding="utf-8", sep="\t", header=0)
+        # Sub-task 1: Convert labels with attained and constrained to only presence
+        for label in labels:
+            attained_col = label + " attained"
+            constrained_col = label + " constrained"
+            labels_frame[label] = ((labels_frame[attained_col] > 0.0) | (labels_frame[constrained_col] > 0.0)).astype(float)
+        columns_to_drop = [label + suffix for label in labels for suffix in [" attained", " constrained"]]
+        labels_frame.drop(columns=columns_to_drop, inplace=True)
+        # End sub-task-1
         labels_frame = pandas.merge(data_frame, labels_frame, on=["Text-ID", "Sentence-ID"])
         labels_matrix = numpy.zeros((labels_frame.shape[0], len(labels)))
         for idx, label in enumerate(labels):
