@@ -2,7 +2,9 @@
 
 https://github.com/VictorMYeste/touche-human-value-detection
 
-# bert-baseline (principios de abril)
+# Probando modelos
+
+## bert-baseline (principios de abril)
 
 Self-direction: thought attained:       0.00
 Self-direction: thought constrained:    0.00
@@ -45,7 +47,7 @@ Universalism: tolerance constrained:    0.06
 
 Macro average:                          0.16
 
-# bert-baseline (17/04)
+## bert-baseline (17/04)
 
 batch_size=8, num_train_epochs=5, learning_rate=2e-5, weight_decay=0.01
 
@@ -90,7 +92,7 @@ Universalism: tolerance constrained:    0.03
 
 Macro average:                          0.15
 
-# bert-baseline-optuna
+## bert-baseline-optuna
 
 Best trial:
   Value: 0.12
@@ -102,7 +104,7 @@ Best trial:
 
 Best trial is worse than bert-baseline (17/04), so optune is discarded for now (it is too slow to do a new batch of different trials with no cuda)
 
-# bert-baseline-scheduler (Linear)
+## bert-baseline-scheduler (Linear)
 
 batch_size=8, num_train_epochs=5, learning_rate=2e-5, weight_decay=0.01
 
@@ -149,7 +151,7 @@ Universalism: tolerance constrained:    0.00
 
 Macro average:                          0.15
 
-# bert-baseline-scheduler (StepLR)
+## bert-baseline-scheduler (StepLR)
 
 batch_size=8, num_train_epochs=5, learning_rate=2e-5, weight_decay=0.01
 
@@ -196,7 +198,7 @@ Universalism: tolerance constrained:    0.00
 
 Macro average:                          0.00
 
-# bert-baseline-scheduler (ExponentialLR)
+## bert-baseline-scheduler (ExponentialLR)
 
 batch_size=8, num_train_epochs=5, learning_rate=2e-5, weight_decay=0.01
 
@@ -243,7 +245,7 @@ Universalism: tolerance constrained:    0.01
 
 Macro average:                          0.01
 
-# bert-baseline-scheduler (CosineAnnealingLR)
+## bert-baseline-scheduler (CosineAnnealingLR)
 
 batch_size=8, num_train_epochs=5, learning_rate=2e-5, weight_decay=0.01
 
@@ -290,7 +292,7 @@ Universalism: tolerance constrained:    0.00
 
 Macro average:                          0.14
 
-# roberta-base con scheduler (Linear)
+## roberta-base con scheduler (Linear)
 
 Self-direction: thought attained:       0.00
 Self-direction: thought constrained:    0.00
@@ -333,7 +335,7 @@ Universalism: tolerance constrained:    0.00
 
 Macro average:                          0.00
 
-# roberta-base
+## roberta-base
 
 Self-direction: thought attained:       0.00
 Self-direction: thought constrained:    0.00
@@ -376,7 +378,7 @@ Universalism: tolerance constrained:    0.00
 
 Macro average:                          0.17
 
-# deberta
+## deberta
 
 Self-direction: thought attained:       0.04
 Self-direction: thought constrained:    0.00
@@ -419,7 +421,7 @@ Universalism: tolerance constrained:    0.07
 
 Macro average:                          0.20
 
-# electra
+## electra
 
 Self-direction: thought attained:       0.00
 Self-direction: thought constrained:    0.00
@@ -462,7 +464,7 @@ Universalism: tolerance constrained:    0.00
 
 Macro average:                          0.15
 
-# xlnet
+## xlnet
 
 Self-direction: thought attained:       0.00
 Self-direction: thought constrained:    0.00
@@ -524,3 +526,29 @@ dos modelos: primera tarea de ver si el valor humano está presente y luego si e
 podrían esta cambiando la distribución de los valores humanos según la cultura (si hay alguna clasificación de algún autor), atacando el prefijo. Aplicar el entrenamiento por separado por cada cultura en la primera capa (primera tarea)
 
 features lingüísticos quizá mejor hablarlo en una semana, igual que cómo ejecutarlo
+
+# Subtask 1
+
+Con deberta.
+
+Self-direction: thought:                0.07
+Self-direction: action:                 0.24
+Stimulation:                            0.29
+Hedonism:                               0.29
+Achievement:                            0.33
+Power: dominance:                       0.32
+Power: resources:                       0.31
+Face:                                   0.25
+Security: personal:                     0.28
+Security: societal:                     0.42
+Tradition:                              0.45
+Conformity: rules:                      0.44
+Conformity: interpersonal:              0.09
+Humility:                               0.00
+Benevolence: caring:                    0.24
+Benevolence: dependability:             0.24
+Universalism: concern:                  0.33
+Universalism: nature:                   0.52
+Universalism: tolerance:                0.23
+
+Macro average:                          0.28
