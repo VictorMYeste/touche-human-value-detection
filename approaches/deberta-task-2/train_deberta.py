@@ -11,6 +11,16 @@ import transformers
 # from huggingface_hub import notebook_login
 # notebook_login()
 
+class CustomDataCollator(transformers.DataCollatorWithPadding):
+    def __init__(self, tokenizer):
+        super().__init__(tokenizer=tokenizer, return_tensors="pt")
+
+    def __call__(self, features):
+        # Primero usamos el collator estándar para manejar el padding
+        batch = super().__call__(features)
+        # Asegúrate de que todas las transformaciones adicionales necesarias sean aplicadas aquí
+        return batch
+
 # GENERIC
 
 values = [ "Self-direction: thought", "Self-direction: action", "Stimulation",  "Hedonism", "Achievement", "Power: dominance", "Power: resources", "Face", "Security: personal", "Security: societal", "Tradition", "Conformity: rules", "Conformity: interpersonal", "Humility", "Benevolence: caring", "Benevolence: dependability", "Universalism: concern", "Universalism: nature", "Universalism: tolerance" ]
@@ -56,7 +66,7 @@ def load_dataset(directory, tokenizer, load_labels=True, sample_rate=1.0):
 
 # TRAINING
 
-def train(training_dataset, validation_dataset, subtask, pretrained_model, tokenizer, model_name=None, batch_size=8, num_train_epochs=5, learning_rate=2e-5, weight_decay=0.01):
+def train(training_dataset, validation_dataset, subtask, pretrained_model, tokenizer, model_name=None, batch_size=8, num_train_epochs=2, learning_rate=2e-5, weight_decay=0.01):
     # https://github.com/NielsRogge/Transformers-Tutorials/blob/master/BERT/Fine_tuning_BERT_(and_friends)_for_multi_label_text_classification.ipynb
     if subtask == 1:
         def compute_metrics(eval_prediction):
@@ -135,7 +145,7 @@ def train(training_dataset, validation_dataset, subtask, pretrained_model, token
     trainer = transformers.Trainer(model, args,
         train_dataset=training_dataset, eval_dataset=validation_dataset,
         compute_metrics=compute_metrics, tokenizer=tokenizer,
-        data_collator=custom_collate_fn)
+        data_collator=CustomDataCollator(tokenizer))
 
     trainer.train()
 
