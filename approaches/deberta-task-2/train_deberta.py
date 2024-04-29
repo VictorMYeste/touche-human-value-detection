@@ -127,9 +127,15 @@ def train(training_dataset, validation_dataset, subtask, pretrained_model, token
 
     print("TRAINING")
     print("========")
+    def custom_collate_fn(batch):
+        collator = transformers.DataCollatorWithPadding(tokenizer=tokenizer)
+        batch = collator(batch)
+        return batch
+    
     trainer = transformers.Trainer(model, args,
         train_dataset=training_dataset, eval_dataset=validation_dataset,
-        compute_metrics=compute_metrics, tokenizer=tokenizer)
+        compute_metrics=compute_metrics, tokenizer=tokenizer,
+        data_collator=custom_collate_fn)
 
     trainer.train()
 
@@ -198,10 +204,10 @@ args = cli.parse_args()
 pretrained_model = "microsoft/deberta-base"
 tokenizer = transformers.DebertaTokenizer.from_pretrained(pretrained_model)
 
-training_dataset, training_text_ids, training_sentence_ids = load_dataset(args.training_dataset, tokenizer, sample_rate=0.1)
+training_dataset, training_text_ids, training_sentence_ids = load_dataset(args.training_dataset, tokenizer, sample_rate=0.01)
 validation_dataset = training_dataset
 if args.validation_dataset != None:
-    validation_dataset, validation_text_ids, validation_sentence_ids = load_dataset(args.validation_dataset, tokenizer, sample_rate=0.1)
+    validation_dataset, validation_text_ids, validation_sentence_ids = load_dataset(args.validation_dataset, tokenizer, sample_rate=0.01)
 
 # Subtask 1: Train
 subtask = 1
