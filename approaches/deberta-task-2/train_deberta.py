@@ -8,7 +8,8 @@ import tempfile
 import torch
 import transformers
 
-
+# from huggingface_hub import notebook_login
+# notebook_login()
 
 # GENERIC
 
@@ -20,11 +21,14 @@ labels = sum([[value + " attained", value + " constrained"] for value in values]
 id2label = {idx:label for idx, label in enumerate(labels)}
 label2id = {label:idx for idx, label in enumerate(labels)} 
 
-def load_dataset(directory, tokenizer, load_labels=True):
+def load_dataset(directory, tokenizer, load_labels=True, sample_rate=1.0):
     sentences_file_path = os.path.join(directory, "sentences.tsv")
     labels_file_path = os.path.join(directory, "labels.tsv")
     
     data_frame = pandas.read_csv(sentences_file_path, encoding="utf-8", sep="\t", header=0)
+
+    if sample_rate < 1.0:
+        data_frame = data_frame.sample(frac=sample_rate, random_state=42).reset_index(drop=True)
 
     # Fix TypeError: TextEncodeInput must be Union[TextInputSequence, Tuple[InputSequence, InputSequence]]
     data_frame['Text'] = data_frame['Text'].fillna('')
@@ -151,20 +155,36 @@ def filter_data_based_on_first_model(model, training_dataset, validation_dataset
     trainer = transformers.Trainer(model=model)
 
     # Get predictions for the training dataset
-    train_predictions = trainer.predict(training_dataset)
-    # Get predictions for the validation dataset
-    validation_predictions = trainer.predict(validation_dataset)
-
+    train_results = trainer.predict(training_dataset)
+    # Extract scores (ensure softmax is applied if model outputs logits)
+    train_scores = torch.nn.functional.softmax(torch.tensor(train_results.predictions), dim=-1)
     # Apply a threshold to determine which inputs pass to the next model
-    # Only those entries where at least one label is greater than the threshold
-    train_indices = numpy.where(train_predictions.predictions.max(axis=1) > threshold)[0]
-    validation_indices = numpy.where(validation_predictions.predictions.max(axis=1) > threshold)[0]
+    train_indices = (train_scores.max(axis=1).values > threshold).nonzero(as_tuple=True)[0].numpy()
+    # Filter original training dataset to retain only selected entries
+    filtered_train_dataset = training_dataset.select(train_indices.tolist())
+
+    # Repeat the process for validation dataset
+    validation_results = trainer.predict(validation_dataset)
+    validation_scores = torch.nn.functional.softmax(torch.tensor(validation_results.predictions), dim=-1)
+    validation_indices = (validation_scores.max(axis=1).values > threshold).nonzero(as_tuple=True)[0].numpy()
+    filtered_validation_dataset = validation_dataset.select(validation_indices.tolist())
 
     # Filter original datasets to retain only selected entries
     filtered_train_dataset = training_dataset.select(train_indices)
     filtered_validation_dataset = validation_dataset.select(validation_indices)
 
     return filtered_train_dataset, filtered_validation_dataset
+
+def push_model_to_hub(trainer, model_name, private=True):
+    if model_name:
+        trainer.push_to_hub(
+            repo_name=model_name,
+            use_auth_token=True,
+            private=private
+        )
+        print(f"Model {model_name} successfully loaded into Hugging Face Hub.")
+    else:
+        print("Model name is None or empty, not pushing to hub.")
 
 # COMMAND LINE INTERFACE
 
@@ -178,10 +198,10 @@ args = cli.parse_args()
 pretrained_model = "microsoft/deberta-base"
 tokenizer = transformers.DebertaTokenizer.from_pretrained(pretrained_model)
 
-training_dataset, training_text_ids, training_sentence_ids = load_dataset(args.training_dataset, tokenizer)
+training_dataset, training_text_ids, training_sentence_ids = load_dataset(args.training_dataset, tokenizer, sample_rate=0.1)
 validation_dataset = training_dataset
 if args.validation_dataset != None:
-    validation_dataset, validation_text_ids, validation_sentence_ids = load_dataset(args.validation_dataset, tokenizer)
+    validation_dataset, validation_text_ids, validation_sentence_ids = load_dataset(args.validation_dataset, tokenizer, sample_rate=0.1)
 
 # Subtask 1: Train
 subtask = 1
@@ -196,9 +216,11 @@ trainer_subtask2, _ = train(filtered_training_data, filtered_validation_data, su
 if args.model_name != None:
     print("\n\nUPLOAD to https://huggingface.co/" + args.model_name + " (using HF_TOKEN environment variable)")
     print("======")
-    #trainer_subtask2.push_to_hub()
+    # push_model_to_hub(trainer_subtask1, args.model_name + "_Subtask_1", private=True)
+    # push_model_to_hub(trainer_subtask2, args.model_name + "_Subtask_2", private=True)
 
 if args.model_directory != None:
     print("\n\nSAVE to " + args.model_directory)
     print("======")
-    trainer_subtask2.save_model(args.model_directory)
+    trainer_subtask1.save_model(args.model_directory + "/subtask1")
+    trainer_subtask2.save_model(args.model_directory + "/subtask2")

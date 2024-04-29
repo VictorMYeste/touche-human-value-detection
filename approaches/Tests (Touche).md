@@ -552,3 +552,8 @@ Universalism: nature:                   0.52
 Universalism: tolerance:                0.23
 
 Macro average:                          0.28
+
+# Secuencial subtask 1 and 2
+
+Con deberta.
+
