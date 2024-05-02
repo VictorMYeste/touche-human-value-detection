@@ -553,7 +553,11 @@ Universalism: tolerance:                0.23
 
 Macro average:                          0.28
 
-# Secuencial subtask 1 and 2
+# Subtask 2
 
 Con deberta.
+
+
+
+# Cascading models = subtask 1 + subtask 2
 

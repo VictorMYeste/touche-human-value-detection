@@ -18,8 +18,7 @@ label2id = {label:idx for idx, label in enumerate(labels)}
 
 # SETUP
 
-#model_path = "model" # load from directory
-model_path = "JohannesKiesel/valueeval24-bert-baseline-en" # load from huggingface hub
+model_path = "model_task_1" # load from directory
 
 tokenizer = transformers.AutoTokenizer.from_pretrained(model_path)
 model = transformers.AutoModelForSequenceClassification.from_pretrained(model_path)
