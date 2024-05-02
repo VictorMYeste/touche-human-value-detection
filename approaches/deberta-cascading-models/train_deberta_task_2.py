@@ -8,34 +8,14 @@ import tempfile
 import torch
 import transformers
 
+import evaluate
+f1 = evaluate.load("f1")
+
 # GENERIC
 values = [ "Self-direction: thought", "Self-direction: action", "Stimulation",  "Hedonism", "Achievement", "Power: dominance", "Power: resources", "Face", "Security: personal", "Security: societal", "Tradition", "Conformity: rules", "Conformity: interpersonal", "Humility", "Benevolence: caring", "Benevolence: dependability", "Universalism: concern", "Universalism: nature", "Universalism: tolerance" ]
 labels = [ "attained", "constrained", "neutral" ]
 id2label = {idx:label for idx, label in enumerate(labels)}
 label2id = {label:idx for idx, label in enumerate(labels)} 
-
-def load_dataset(directory, tokenizer, load_labels=True):
-    sentences_file_path = os.path.join(directory, "sentences.tsv")
-    labels_file_path = os.path.join(directory, "labels.tsv")
-    
-    data_frame = pandas.read_csv(sentences_file_path, encoding="utf-8", sep="\t", header=0)
-
-    # Fix TypeError: TextEncodeInput must be Union[TextInputSequence, Tuple[InputSequence, InputSequence]]
-    data_frame['Text'] = data_frame['Text'].fillna('')
-
-    encoded_sentences = tokenizer(data_frame["Text"].to_list(), truncation=True)
-
-    if load_labels and os.path.isfile(labels_file_path):
-        labels_frame = pandas.read_csv(labels_file_path, encoding="utf-8", sep="\t", header=0)
-        labels_frame = pandas.merge(data_frame, labels_frame, on=["Text-ID", "Sentence-ID"])
-        labels_matrix = numpy.zeros((labels_frame.shape[0], len(labels)))
-        for idx, label in enumerate(labels):
-            if label in labels_frame.columns:
-                labels_matrix[:, idx] = (labels_frame[label] >= 0.5).astype(int)
-        encoded_sentences["labels"] = labels_matrix.tolist()
-
-    encoded_sentences = datasets.Dataset.from_dict(encoded_sentences)
-    return encoded_sentences, data_frame["Text-ID"].to_list(), data_frame["Sentence-ID"].to_list()
 
 def load_dataset(directory):
     sentences_file_path = os.path.join(directory, "sentences.tsv")
@@ -50,7 +30,7 @@ def load_dataset(directory):
 
     # Fix TypeError: TextEncodeInput must be Union[TextInputSequence, Tuple[InputSequence, InputSequence]]
     sentences_df["Text"] = sentences_df["Text"].fillna("")
-    sentences_df = pandas.merge(sentences_df, labels_df, on=["Text-ID", "Sentence-ID"])
+    sentences_df = pandas.merge(sentences_df, labels_df, on=["Text-ID", "Sentence-ID"]).iloc[:200]
 
     # Crear pares premise-hypothesis
     data = []
@@ -63,19 +43,19 @@ def load_dataset(directory):
             cnst = row[column + " constrained"]
             if (attn + cnst) >= 0.5:
                 if attn > cnst:
-                    data.append({'id': text_id + "_" + str(sentence_id), 'premise': sentence, 'hypothesis': column, 'label': 'attained'})
+                    data.append({'premise': sentence, 'hypothesis': column, 'label': 'attained'})
                 elif cnst > attn:
-                    data.append({'id': text_id + "_" + str(sentence_id), 'premise': sentence, 'hypothesis': column, 'label': 'constrained'})
+                    data.append({'premise': sentence, 'hypothesis': column, 'label': 'constrained'})
                 else:
-                    data.append({'id': text_id + "_" + str(sentence_id), 'premise': sentence, 'hypothesis': column, 'label': 'neutral'})
+                    data.append({'premise': sentence, 'hypothesis': column, 'label': 'neutral'})
 
-    encoded_sentences = datasets.Dataset.from_pandas(pandas.DataFrame(data=data))
+    data = pandas.DataFrame(data)
     
-    return (
-        encoded_sentences,
-        data_frame["Text-ID"].to_list(),
-        data_frame["Sentence-ID"].to_list(),
-    )
+    data['label'] = data['label'].map({'attained': 0, 'constrained': 1, 'neutral': 2})
+
+    encoded_sentences = datasets.Dataset.from_pandas(data)
+
+    return encoded_sentences
 
 # TRAINING
 
@@ -83,20 +63,10 @@ def train(training_dataset, validation_dataset, pretrained_model, tokenizer, mod
     # https://github.com/NielsRogge/Transformers-Tutorials/blob/master/BERT/Fine_tuning_BERT_(and_friends)_for_multi_label_text_classification.ipynb
     def compute_metrics(eval_prediction):
         prediction_scores, label_scores = eval_prediction
-        predictions = prediction_scores >= 0.0 # sigmoid
-        labels = label_scores >= 0.5
+        predictions = numpy.argmax(prediction_scores, axis = 1)
+        f1_score = f1.compute(predictions=predictions, references=label_scores)
 
-        f1_scores = {}
-        for i in range(predictions.shape[1]):
-            predicted = predictions[:,i].sum()
-            true = labels[:,i].sum()
-            true_positives = numpy.logical_and(predictions[:,i], labels[:,i]).sum()
-            precision = 0 if predicted == 0 else true_positives / predicted
-            recall = 0 if true == 0 else true_positives / true
-            f1_scores[id2label[i]] = round(0 if precision + recall == 0 else 2 * (precision * recall) / (precision + recall), 2)
-        macro_average_f1_score = round(numpy.mean(list(f1_scores.values())), 2)
-
-        return {'f1-score': f1_scores, 'marco-avg-f1-score': macro_average_f1_score}
+        return f1_score
 
     output_dir = tempfile.TemporaryDirectory()
     args = transformers.TrainingArguments(
@@ -114,7 +84,7 @@ def train(training_dataset, validation_dataset, pretrained_model, tokenizer, mod
     )
 
     model = transformers.AutoModelForSequenceClassification.from_pretrained(
-        pretrained_model, problem_type="multi_label_classification",
+        pretrained_model,
         num_labels=len(labels), id2label=id2label, label2id=label2id)
     if torch.cuda.is_available():
         print("Using cuda")
@@ -122,9 +92,12 @@ def train(training_dataset, validation_dataset, pretrained_model, tokenizer, mod
 
     print("TRAINING")
     print("========")
+    # data_collator = transformers.DataCollatorWithPadding(tokenizer=tokenizer, padding=True)
+
     trainer = transformers.Trainer(model, args,
         train_dataset=training_dataset, eval_dataset=validation_dataset,
-        compute_metrics=compute_metrics, tokenizer=tokenizer)
+        compute_metrics=compute_metrics, tokenizer=tokenizer, # data_collator=data_collator
+        )
 
     trainer.train()
 
@@ -146,18 +119,18 @@ cli.add_argument("-m", "--model-name")
 cli.add_argument("-o", "--model-directory")
 args = cli.parse_args()
 
-pretrained_model = "roberta-large-mnli"
+pretrained_model = "microsoft/deberta-base"
 tokenizer = transformers.AutoTokenizer.from_pretrained(pretrained_model)
 
 def encode(inference):
     return tokenizer(inference['premise'], inference['hypothesis'], truncation=True, padding='max_length', max_length=512)
 
-training_dataset, training_text_ids, training_sentence_ids = load_dataset(args.training_dataset)
+training_dataset = load_dataset(args.training_dataset)
 training_dataset = training_dataset.map(encode, batched=True)
 
 validation_dataset = training_dataset
 if args.validation_dataset != None:
-    validation_dataset, validation_text_ids, validation_sentence_ids = load_dataset(args.validation_dataset)
+    validation_dataset = load_dataset(args.validation_dataset)
 validation_dataset = validation_dataset.map(encode, batched=True)
 
 trainer = train(training_dataset, validation_dataset, pretrained_model, tokenizer, model_name = args.model_name)
