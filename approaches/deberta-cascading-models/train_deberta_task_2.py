@@ -9,10 +9,8 @@ import torch
 import transformers
 
 # GENERIC
-
 values = [ "Self-direction: thought", "Self-direction: action", "Stimulation",  "Hedonism", "Achievement", "Power: dominance", "Power: resources", "Face", "Security: personal", "Security: societal", "Tradition", "Conformity: rules", "Conformity: interpersonal", "Humility", "Benevolence: caring", "Benevolence: dependability", "Universalism: concern", "Universalism: nature", "Universalism: tolerance" ]
-# labels = sum([[value + " attained", value + " constrained"] for value in values], [])
-labels = values[:]
+labels = [ "attained", "constrained", "neutral" ]
 id2label = {idx:label for idx, label in enumerate(labels)}
 label2id = {label:idx for idx, label in enumerate(labels)} 
 
@@ -29,14 +27,6 @@ def load_dataset(directory, tokenizer, load_labels=True):
 
     if load_labels and os.path.isfile(labels_file_path):
         labels_frame = pandas.read_csv(labels_file_path, encoding="utf-8", sep="\t", header=0)
-        # Sub-task 1: Convert labels with attained and constrained to only presence
-        for label in labels:
-            attained_col = label + " attained"
-            constrained_col = label + " constrained"
-            labels_frame[label] = ((labels_frame[attained_col] > 0.0) | (labels_frame[constrained_col] > 0.0)).astype(float)
-        columns_to_drop = [label + suffix for label in labels for suffix in [" attained", " constrained"]]
-        labels_frame.drop(columns=columns_to_drop, inplace=True)
-        # End sub-task-1
         labels_frame = pandas.merge(data_frame, labels_frame, on=["Text-ID", "Sentence-ID"])
         labels_matrix = numpy.zeros((labels_frame.shape[0], len(labels)))
         for idx, label in enumerate(labels):
@@ -47,6 +37,45 @@ def load_dataset(directory, tokenizer, load_labels=True):
     encoded_sentences = datasets.Dataset.from_dict(encoded_sentences)
     return encoded_sentences, data_frame["Text-ID"].to_list(), data_frame["Sentence-ID"].to_list()
 
+def load_dataset(directory):
+    sentences_file_path = os.path.join(directory, "sentences.tsv")
+    labels_file_path = os.path.join(directory, "labels.tsv")
+
+    data_frame = pandas.read_csv(
+        sentences_file_path, encoding="utf-8", sep="\t", header=0
+    )
+
+    sentences_df = pandas.read_csv(sentences_file_path, encoding="utf-8", sep="\t", header=0)
+    labels_df = pandas.read_csv(labels_file_path, encoding="utf-8", sep="\t", header=0)
+
+    # Fix TypeError: TextEncodeInput must be Union[TextInputSequence, Tuple[InputSequence, InputSequence]]
+    sentences_df["Text"] = sentences_df["Text"].fillna("")
+    sentences_df = pandas.merge(sentences_df, labels_df, on=["Text-ID", "Sentence-ID"])
+
+    # Crear pares premise-hypothesis
+    data = []
+    for _, row in sentences_df.iterrows():
+        text_id = row['Text-ID']
+        sentence_id = row['Sentence-ID']
+        sentence = row['Text']
+        for column in values:
+            attn = row[column + " attained"]
+            cnst = row[column + " constrained"]
+            if (attn + cnst) >= 0.5:
+                if attn > cnst:
+                    data.append({'id': text_id + "_" + str(sentence_id), 'premise': sentence, 'hypothesis': column, 'label': 'attained'})
+                elif cnst > attn:
+                    data.append({'id': text_id + "_" + str(sentence_id), 'premise': sentence, 'hypothesis': column, 'label': 'constrained'})
+                else:
+                    data.append({'id': text_id + "_" + str(sentence_id), 'premise': sentence, 'hypothesis': column, 'label': 'neutral'})
+
+    encoded_sentences = datasets.Dataset.from_pandas(pandas.DataFrame(data=data))
+    
+    return (
+        encoded_sentences,
+        data_frame["Text-ID"].to_list(),
+        data_frame["Sentence-ID"].to_list(),
+    )
 
 # TRAINING
 
@@ -117,14 +146,22 @@ cli.add_argument("-m", "--model-name")
 cli.add_argument("-o", "--model-directory")
 args = cli.parse_args()
 
-pretrained_model = "microsoft/deberta-base"
-tokenizer = transformers.DebertaTokenizer.from_pretrained(pretrained_model)
+pretrained_model = "roberta-large-mnli"
+tokenizer = transformers.AutoTokenizer.from_pretrained(pretrained_model)
 
-training_dataset, training_text_ids, training_sentence_ids = load_dataset(args.training_dataset, tokenizer)
+def encode(inference):
+    return tokenizer(inference['premise'], inference['hypothesis'], truncation=True, padding='max_length', max_length=512)
+
+training_dataset, training_text_ids, training_sentence_ids = load_dataset(args.training_dataset)
+training_dataset = training_dataset.map(encode, batched=True)
+
 validation_dataset = training_dataset
 if args.validation_dataset != None:
-    validation_dataset, validation_text_ids, validation_sentence_ids = load_dataset(args.validation_dataset, tokenizer)
+    validation_dataset, validation_text_ids, validation_sentence_ids = load_dataset(args.validation_dataset)
+validation_dataset = validation_dataset.map(encode, batched=True)
+
 trainer = train(training_dataset, validation_dataset, pretrained_model, tokenizer, model_name = args.model_name)
+
 if args.model_name != None:
     print("\n\nUPLOAD to https://huggingface.co/" + args.model_name + " (using HF_TOKEN environment variable)")
     print("======")

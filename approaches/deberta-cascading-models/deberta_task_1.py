@@ -19,6 +19,7 @@ label2id = {label:idx for idx, label in enumerate(labels)}
 # SETUP
 
 model_path = "model_task_1" # load from directory
+#model_path = "JohannesKiesel/valueeval24-bert-baseline-en" # load from huggingface hub
 
 tokenizer = transformers.AutoTokenizer.from_pretrained(model_path)
 model = transformers.AutoModelForSequenceClassification.from_pretrained(model_path)
@@ -32,7 +33,14 @@ def predict(text):
     # "text" contains all sentences (plain strings) of a single text in order (same Text-ID in the input file)
     encoded_sentences = tokenizer(text, truncation=True, padding=True, return_tensors="pt")
     sentences_predictions = sigmoid(model(**encoded_sentences).logits)
-    labels = [{id2label[idx]: prediction for idx, prediction in enumerate(predictions.tolist())} for predictions in sentences_predictions]
+    labels = []
+    for predictions in sentences_predictions:
+        pred_dict = {}
+        for idx, prediction in enumerate(predictions.tolist()):
+            value_label = id2label[idx]  # Usando id2label original
+            pred_dict[value_label + " attained"] = prediction
+            pred_dict[value_label + " constrained"] = 0.0  # Añade constrained con valor 0
+        labels.append(pred_dict)
     return labels
 
 # EXECUTION
