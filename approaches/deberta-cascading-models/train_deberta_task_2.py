@@ -14,7 +14,7 @@ accuracy = evaluate.load("accuracy")
 
 # GENERIC
 values = [ "Self-direction: thought", "Self-direction: action", "Stimulation",  "Hedonism", "Achievement", "Power: dominance", "Power: resources", "Face", "Security: personal", "Security: societal", "Tradition", "Conformity: rules", "Conformity: interpersonal", "Humility", "Benevolence: caring", "Benevolence: dependability", "Universalism: concern", "Universalism: nature", "Universalism: tolerance" ]
-labels = [ "attained", "constrained", "neutral" ]
+labels = [ "attained", "constrained" ]
 id2label = {idx:label for idx, label in enumerate(labels)}
 label2id = {label:idx for idx, label in enumerate(labels)} 
 
@@ -31,7 +31,7 @@ def load_dataset(directory):
 
     # Fix TypeError: TextEncodeInput must be Union[TextInputSequence, Tuple[InputSequence, InputSequence]]
     sentences_df["Text"] = sentences_df["Text"].fillna("")
-    sentences_df = pandas.merge(sentences_df, labels_df, on=["Text-ID", "Sentence-ID"]).iloc[:1000]
+    sentences_df = pandas.merge(sentences_df, labels_df, on=["Text-ID", "Sentence-ID"])
 
     # Crear pares premise-hypothesis
     data = []
