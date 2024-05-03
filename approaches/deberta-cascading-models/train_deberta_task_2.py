@@ -10,6 +10,7 @@ import transformers
 
 import evaluate
 f1 = evaluate.load("f1")
+accuracy = evaluate.load("accuracy")
 
 # GENERIC
 values = [ "Self-direction: thought", "Self-direction: action", "Stimulation",  "Hedonism", "Achievement", "Power: dominance", "Power: resources", "Face", "Security: personal", "Security: societal", "Tradition", "Conformity: rules", "Conformity: interpersonal", "Humility", "Benevolence: caring", "Benevolence: dependability", "Universalism: concern", "Universalism: nature", "Universalism: tolerance" ]
@@ -30,13 +31,11 @@ def load_dataset(directory):
 
     # Fix TypeError: TextEncodeInput must be Union[TextInputSequence, Tuple[InputSequence, InputSequence]]
     sentences_df["Text"] = sentences_df["Text"].fillna("")
-    sentences_df = pandas.merge(sentences_df, labels_df, on=["Text-ID", "Sentence-ID"]).iloc[:200]
+    sentences_df = pandas.merge(sentences_df, labels_df, on=["Text-ID", "Sentence-ID"]).iloc[:1000]
 
     # Crear pares premise-hypothesis
     data = []
     for _, row in sentences_df.iterrows():
-        text_id = row['Text-ID']
-        sentence_id = row['Sentence-ID']
         sentence = row['Text']
         for column in values:
             attn = row[column + " attained"]
@@ -46,12 +45,10 @@ def load_dataset(directory):
                     data.append({'premise': sentence, 'hypothesis': column, 'label': 'attained'})
                 elif cnst > attn:
                     data.append({'premise': sentence, 'hypothesis': column, 'label': 'constrained'})
-                else:
-                    data.append({'premise': sentence, 'hypothesis': column, 'label': 'neutral'})
 
     data = pandas.DataFrame(data)
     
-    data['label'] = data['label'].map({'attained': 0, 'constrained': 1, 'neutral': 2})
+    data['label'] = data['label'].map({'attained': 0, 'constrained': 1})
 
     encoded_sentences = datasets.Dataset.from_pandas(data)
 
@@ -64,9 +61,12 @@ def train(training_dataset, validation_dataset, pretrained_model, tokenizer, mod
     def compute_metrics(eval_prediction):
         prediction_scores, label_scores = eval_prediction
         predictions = numpy.argmax(prediction_scores, axis = 1)
-        f1_score = f1.compute(predictions=predictions, references=label_scores)
+        f1_score_macro = f1.compute(predictions=predictions, references=label_scores, average="macro")
+        f1_score_micro = f1.compute(predictions=predictions, references=label_scores, average="micro")
+        accuracy_score = accuracy.compute(predictions=predictions, references=label_scores)
 
-        return f1_score
+        return {"f1 macro": f1_score_macro, "f1 micro": f1_score_micro, "accuracy": accuracy_score}
+
 
     output_dir = tempfile.TemporaryDirectory()
     args = transformers.TrainingArguments(
@@ -80,7 +80,6 @@ def train(training_dataset, validation_dataset, pretrained_model, tokenizer, mod
         num_train_epochs=num_train_epochs,
         weight_decay=weight_decay,
         load_best_model_at_end=True,
-        metric_for_best_model='marco-avg-f1-score'
     )
 
     model = transformers.AutoModelForSequenceClassification.from_pretrained(
@@ -92,11 +91,11 @@ def train(training_dataset, validation_dataset, pretrained_model, tokenizer, mod
 
     print("TRAINING")
     print("========")
-    # data_collator = transformers.DataCollatorWithPadding(tokenizer=tokenizer, padding=True)
+    data_collator = transformers.DataCollatorWithPadding(tokenizer=tokenizer, padding=True)
 
     trainer = transformers.Trainer(model, args,
         train_dataset=training_dataset, eval_dataset=validation_dataset,
-        compute_metrics=compute_metrics, tokenizer=tokenizer, # data_collator=data_collator
+        compute_metrics=compute_metrics, tokenizer=tokenizer, data_collator=data_collator
         )
 
     trainer.train()
@@ -104,10 +103,7 @@ def train(training_dataset, validation_dataset, pretrained_model, tokenizer, mod
     print("\n\nVALIDATION")
     print("==========")
     evaluation = trainer.evaluate()
-    for label in labels:
-        sys.stdout.write("%-39s %.2f\n" % (label + ":", evaluation["eval_f1-score"][label]))
-    sys.stdout.write("\n%-39s %.2f\n" % ("Macro average:", evaluation["eval_marco-avg-f1-score"]))
-
+    print(evaluation)
     return trainer
 
 # COMMAND LINE INTERFACE
@@ -123,7 +119,7 @@ pretrained_model = "microsoft/deberta-base"
 tokenizer = transformers.AutoTokenizer.from_pretrained(pretrained_model)
 
 def encode(inference):
-    return tokenizer(inference['premise'], inference['hypothesis'], truncation=True, padding='max_length', max_length=512)
+    return tokenizer(inference['premise'], inference['hypothesis'], truncation=True)
 
 training_dataset = load_dataset(args.training_dataset)
 training_dataset = training_dataset.map(encode, batched=True)
