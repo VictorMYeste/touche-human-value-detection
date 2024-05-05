@@ -1,5 +1,7 @@
 venv/
 model/
+model_task_1/
+model_task_2/
 valueeval24/
 valueeval24.zip
 output/
