@@ -66,6 +66,9 @@ def predict(text):
                         pred_dict[value + " constrained"] = 0.5
 
                 final_results.append(pred_dict)
+            
+            else:
+                final_results.append(pred_dict)
 
     return final_results
 
