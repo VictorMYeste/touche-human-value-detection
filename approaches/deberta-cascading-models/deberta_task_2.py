@@ -38,7 +38,7 @@ def pipeline_1(text):
     predicted_scores = [probs[idx].item() for idx, label in enumerate(predictions)]
     return predicted_labels, predicted_scores
 
-model_path_2 = "models/model_task_2"
+model_path_2 = "model_task_2"
 pipeline_2 = transformers.pipeline("text-classification", model=model_path_2, tokenizer=model_path_2, top_k=None)
 
 
@@ -81,10 +81,12 @@ def predict(text):
                 for x in model_2_results[0]:
                     pred_dict[hvalue + " " + x["label"]] = x["score"]
             else:
+                
                 pred_dict[hvalue + " attained"] = model_1_scores[predid]
-                pred_dict[hvalue + " constrained"] = model_1_scores[predid]
+                pred_dict[hvalue + " constrained"] = 0.0
         
         final_results.append(pred_dict)
+        print(pred_dict)
     return final_results
 
 # EXECUTION
@@ -111,7 +113,7 @@ if "TIRA_INFERENCE_SERVER" not in os.environ:
     output_dir = sys.argv[2]
     labeled_instances = []
     input_file = os.path.join(dataset_dir, "sentences.tsv")
-    texts_df = pandas.read_csv(input_file, sep='\t', header=0, index_col=None).groupby("Text-ID")
+    texts_df = pandas.read_csv(input_file, sep='\t', header=0, index_col=None).iloc[:100].groupby("Text-ID")
     for text_instances in tqdm(texts_df, desc="Labeling Texts", unit="text"):
         # label the instances of each text separately
         labeled_instances.extend(label(text_instances[1].sort_values("Sentence-ID").to_dict("records")))
