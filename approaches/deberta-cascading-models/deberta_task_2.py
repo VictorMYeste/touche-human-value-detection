@@ -52,7 +52,7 @@ def predict(text):
             if sentence['score'] > 0.5:
 
                 # Apply Model 2
-                input_for_model_2 = f"{text} {value}"
+                input_for_model_2 = f"{sentence} {value}"
                 model_2_results = pipeline_2(input_for_model_2, truncation=True)
 
                 # print(model_2_results)
