@@ -46,26 +46,17 @@ def predict(text):
     final_results = []
     for sentence_text in text:
         model_1_labels, model_1_scores = pipeline_1(sentence_text)
-        # Human value predicted with the largest score:
-        top_value = [x for x, _ in sorted(zip(model_1_labels, model_1_scores), key=lambda pair: pair[1], reverse=True)][0]
         # Prediction using model two for the human value with largest confidence score, to be used as default:
-        backup_model_2_results = ""
         pred_dict = {}
         for hvalue in values:
+            input_for_model_2 = f"{sentence_text} {hvalue}"
+            model_2_results = pipeline_2(input_for_model_2, truncation=True)
             predid = model_1_labels.index(hvalue)
-            if model_1_scores[predid] >= 0.5:
-                input_for_model_2 = f"{sentence_text} {hvalue}"
-                model_2_results = pipeline_2(input_for_model_2, truncation=True)
-                backup_model_2_results = model_2_results
-                for x in model_2_results[0]:
+            for x in model_2_results[0]:
+                if model_1_scores[predid] >= 0.5:
                     pred_dict[hvalue + " " + x["label"]] = x["score"]
-            else:
-                # Only if the value is not retrieved as possible, to avoid having 0.0s, get attained-constrained
-                # decision from the human value detected with the highest confidence score:
-                if backup_model_2_results == "":
-                    backup_model_2_results = pipeline_2(f"{sentence_text} {top_value}", truncation=True)
-                for x in backup_model_2_results[0]:
-                    pred_dict[hvalue + " " + x["label"]] = (x["score"] * (model_1_scores[predid] / 2.0))
+                else:
+                    pred_dict[hvalue + " " + x["label"]] = (x["score"] * (model_1_scores[predid] / 2.0))          
         
         final_results.append(pred_dict)
     return final_results
