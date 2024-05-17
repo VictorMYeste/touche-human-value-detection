@@ -1,11 +1,9 @@
 import os
-import datasets
 import pandas
 import numpy
 import torch
 import sys
 import transformers
-import tempfile
 from tqdm import tqdm
 
 # GENERIC
@@ -24,18 +22,15 @@ sigmoid = torch.nn.Sigmoid()
 def pipeline_1(text):
     # Source: https://github.com/NielsRogge/Transformers-Tutorials/blob/master/BERT/Fine_tuning_BERT_(and_friends)_for_multi_label_text_classification.ipynb
     """ Predicts the value probabilities (attained and constrained) for each sentence """
-    # "text" contains all sentences (plain strings) of a single text in order (same Text-ID in the input file)
     encoding = tokenizer(text, return_tensors="pt")
     encoding = {k: v for k,v in encoding.items()}
     outputs = model(**encoding)
     logits = outputs.logits
-    # apply sigmoid + threshold
     sigmoid = torch.nn.Sigmoid()
     probs = sigmoid(logits.squeeze().cpu())
-    predictions = numpy.zeros(probs.shape)
-    # predictions[numpy.where(probs >= 0.5)] = 1
-    predicted_labels = [id2label[idx] for idx, label in enumerate(predictions)]
-    predicted_scores = [probs[idx].item() for idx, label in enumerate(predictions)]
+    probs = probs.detach().cpu().numpy().tolist()
+    predicted_labels = [id2label[idx] for idx in range(len(probs))]
+    predicted_scores = [probs[idx] for idx in range(len(probs))]
     return predicted_labels, predicted_scores
 
 model_path_2 = "model_task_2"
@@ -47,43 +42,21 @@ pipeline_2 = transformers.pipeline("text-classification", model=model_path_2, to
 # https://github.com/NielsRogge/Transformers-Tutorials/blob/master/BERT/Fine_tuning_BERT_(and_friends)_for_multi_label_text_classification.ipynb
 def predict(text):
     """ Predicts the value probabilities (attained and constrained) for each sentence """
-    # "text" contains all sentences (plain strings) of a single text in order (same Text-ID in the input file)
 
     final_results = []
     for sentence_text in text:
         model_1_labels, model_1_scores = pipeline_1(sentence_text)
-        
-        # pred_dict = {}
-        # for hvalue in values:
-        #     if hvalue in model_1_results:
-        #         input_for_model_2 = f"{sentence_text} {hvalue}"
-        #         model_2_results = pipeline_2(input_for_model_2, truncation=True)
-        #         if model_2_results[0]["score"] >= 0.6:
-        #             if model_2_results[0]['label'] == "attained":
-        #                 pred_dict[hvalue + " attained"] = 1.0
-        #                 pred_dict[hvalue + " constrained"] = 0.0
-        #             else:
-        #                 pred_dict[hvalue + " attained"] = 0.0
-        #                 pred_dict[hvalue + " constrained"] = 1.0
-        #         elif model_2_results[0]['score'] >= 0.4:
-        #             pred_dict[hvalue + " attained"] = 0.5
-        #             pred_dict[hvalue + " constrained"] = 0.5
-        #     else:
-        #         pred_dict[hvalue + " attained"] = 0.0
-        #         pred_dict[hvalue + " constrained"] = 0.0
-
+        # Prediction using model two for the human value with largest confidence score, to be used as default:
         pred_dict = {}
         for hvalue in values:
+            input_for_model_2 = f"{sentence_text} {hvalue}"
+            model_2_results = pipeline_2(input_for_model_2, truncation=True)
             predid = model_1_labels.index(hvalue)
-            if model_1_scores[predid] >= 0.5:
-                input_for_model_2 = f"{sentence_text} {hvalue}"
-                model_2_results = pipeline_2(input_for_model_2, truncation=True)
-                for x in model_2_results[0]:
+            for x in model_2_results[0]:
+                if model_1_scores[predid] >= 0.5:
                     pred_dict[hvalue + " " + x["label"]] = x["score"]
-            else:
-                
-                pred_dict[hvalue + " attained"] = model_1_scores[predid]
-                pred_dict[hvalue + " constrained"] = 0.0
+                else:
+                    pred_dict[hvalue + " " + x["label"]] = (x["score"] * (model_1_scores[predid] / 2.0))          
         
         final_results.append(pred_dict)
     return final_results
