@@ -3,3 +3,5 @@ datasets
 pandas
 tira
 torch
+scikit-learn
+evaluate

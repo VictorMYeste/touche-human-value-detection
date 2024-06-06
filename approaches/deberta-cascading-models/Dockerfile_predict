@@ -1,0 +1,20 @@
+FROM pytorch/pytorch:1.13.1-cuda11.6-cudnn8-runtime
+
+ENV PYTHONPATH=/
+
+# Install requirements
+WORKDIR /
+COPY requirements.txt /
+RUN pip3 install -r requirements.txt
+
+COPY model /models/
+
+COPY deberta_task_1.py /
+COPY deberta_task_2.py /
+
+RUN sed -i -e 's/= "model_task_/= "\/models\/model_task_/g' deberta_task_1.py
+RUN sed -i -e 's/= "model_task_/= "\/models\/model_task_/g' deberta_task_2.py
+
+RUN echo '#!/bin/bash\npython3 /deberta_task_1.py /dataset/validation-english/ /output/task-1\npython3 /deberta_task_2.py /dataset/test-english/ /output/task-2\n' > /run.sh
+
+ENTRYPOINT [ "sh", "run.sh" ]
