@@ -1,0 +1,15 @@
+FROM pytorch/pytorch:1.13.1-cuda11.6-cudnn8-runtime
+
+ENV PYTHONPATH=/
+
+# Install requirements
+WORKDIR /
+COPY requirements.txt /
+RUN pip3 install -r requirements.txt
+
+COPY train_deberta_task_1.py /
+COPY train_deberta_task_2.py /
+
+RUN echo '#!/bin/bash\npython3 /train_deberta_task_1.py -t /dataset/training-english/ -v /dataset/validation-english/ -m "YesteValue-1" -o /models/model_task_1/\npython3 /train_deberta_task_2.py -t /dataset/training-english/ -v /dataset/validation-english/ -m "YesteValue-2" -o /models/model_task_2/\n' > /run.sh
+
+ENTRYPOINT [ "sh", "run.sh" ]
