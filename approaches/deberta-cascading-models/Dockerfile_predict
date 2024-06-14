@@ -7,7 +7,7 @@ WORKDIR /
 COPY requirements.txt /
 RUN pip3 install -r requirements.txt
 
-COPY model /models/
+COPY models /models/
 
 COPY deberta_task_1.py /
 COPY deberta_task_2.py /
