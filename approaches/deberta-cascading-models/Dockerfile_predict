@@ -7,7 +7,10 @@ WORKDIR /
 COPY requirements.txt /
 RUN pip3 install -r requirements.txt
 
-COPY models /models/
+# COPY models /models/ # use for locally trained models, also remove from .dockerignore
+RUN pip3 install "huggingface_hub[cli]" # this and next line for huggingface models
+RUN huggingface-cli download VictorYeste/deberta-based-human-value-detection \
+  && huggingface-cli download VictorYeste/deberta-based-human-value-stance-detection
 
 COPY deberta_task_1.py /
 COPY deberta_task_2.py /

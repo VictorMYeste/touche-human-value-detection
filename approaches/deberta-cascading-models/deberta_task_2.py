@@ -14,9 +14,13 @@ label2id = {label:idx for idx, label in enumerate(values)}
 labels = sum([[value + " attained", value + " constrained"] for value in values], [])
 
 # SETUP
-model_path_1 = "model_task_1"
-tokenizer = transformers.AutoTokenizer.from_pretrained(model_path_1)  # load from directory
-model = transformers.AutoModelForSequenceClassification.from_pretrained(model_path_1)  # load from directory
+model_path_1 = "VictorYeste/deberta-based-human-value-detection" # load from huggingface
+model_path_2 = "VictorYeste/deberta-based-human-value-stance-detection" # load from huggingface
+# model_path_1 = "model_task_1" # load from directory
+# model_path_2 = "model_task_2" # load from directory
+
+tokenizer = transformers.AutoTokenizer.from_pretrained(model_path_1)
+model = transformers.AutoModelForSequenceClassification.from_pretrained(model_path_1)
 sigmoid = torch.nn.Sigmoid()
 
 def pipeline_1(text):
@@ -33,7 +37,6 @@ def pipeline_1(text):
     predicted_scores = [probs[idx] for idx in range(len(probs))]
     return predicted_labels, predicted_scores
 
-model_path_2 = "model_task_2"
 pipeline_2 = transformers.pipeline("text-classification", model=model_path_2, tokenizer=model_path_2, top_k=None)
 
 
