@@ -18,7 +18,8 @@ label2id = {label:idx for idx, label in enumerate(labels)}
 
 # SETUP
 
-model_path = "model_task_1" # load from directory
+model_path = "VictorYeste/deberta-based-human-value-detection" # load from huggingface
+# model_path = "model_task_1" # load from directory
 
 tokenizer = transformers.AutoTokenizer.from_pretrained(model_path)
 model = transformers.AutoModelForSequenceClassification.from_pretrained(model_path)
